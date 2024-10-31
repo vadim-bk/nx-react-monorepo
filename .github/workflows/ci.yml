@@ -5,12 +5,13 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
+    inputs: {} # Allow manual triggering without inputs
 
 permissions:
   actions: read
   contents: read
-  pull-requests: read
 
 jobs:
   main:
