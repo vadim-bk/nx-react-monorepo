@@ -42,6 +42,21 @@ jobs:
           git reset --hard origin/main
           git checkout -b ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
 
+      - name: Create Empty PR First
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Create an empty commit to initialize the branch
+          git commit --allow-empty -m "Initialize ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
+          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
+
+          # Create PR immediately after branch creation
+          gh pr create \
+            --title "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}" \
+            --body "This PR creates a new library: ${{ github.event.inputs.lib_name }}" \
+            --base main \
+            --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
+
       - name: Generate lib
         run: npx nx g @nx/react:library libs/${{ github.event.inputs.lib_name }} --unitTestRunner=vitest --bundler=none
 
@@ -49,14 +64,4 @@ jobs:
         run: |
           git add .
           git commit -m "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}"
-          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }} --force
-
-      - name: Create Pull Request
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr create \
-            --title "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}" \
-            --body "This PR creates a new library: ${{ github.event.inputs.lib_name }}" \
-            --base main \
-            --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
+          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
