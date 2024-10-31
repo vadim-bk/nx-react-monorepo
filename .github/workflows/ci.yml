@@ -1,14 +1,15 @@
 name: CI
 
 on:
+  # Only trigger on push to main branch
   push:
     branches:
       - main
-      - '**' # This will trigger on all branch pushes
+  # Trigger on PRs to main branch
   pull_request:
-    types: [opened, synchronize, reopened]
     branches:
       - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   actions: read
