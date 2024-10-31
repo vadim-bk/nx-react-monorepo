@@ -33,13 +33,19 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Setup Git
+      - name: Setup Git and Create Branch
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          # Clean fetch and branch creation
           git fetch origin
-          git checkout main
-          git reset --hard origin/main
+          git checkout -B main origin/main
+
+          # Delete branch locally and remotely if it exists
+          git branch -D ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }} || true
+          git push origin --delete ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }} || true
+
+          # Create fresh branch
           git checkout -b ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
 
       - name: Create Empty PR First
@@ -48,7 +54,7 @@ jobs:
         run: |
           # Create an empty commit to initialize the branch
           git commit --allow-empty -m "Initialize ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
-          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
+          git push -f origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
 
           # Create PR immediately after branch creation
           gh pr create \
