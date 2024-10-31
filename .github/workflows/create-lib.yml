@@ -61,9 +61,8 @@ jobs:
             --base main \
             --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
 
-      - name: Trigger checks with rebase
+      - name: Trigger checks with empty commit
         run: |
-          git fetch origin main
           git checkout ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
-          git rebase origin/main
-          git push --force-with-lease origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
+          git commit --allow-empty -m "trigger checks"
+          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
