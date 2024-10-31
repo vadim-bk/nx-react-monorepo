@@ -33,35 +33,14 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Setup Git and Create Branch
+      - name: Setup Git
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          # Clean fetch and branch creation
           git fetch origin
-          git checkout -B main origin/main
-
-          # Delete branch locally and remotely if it exists
-          git branch -D ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }} || true
-          git push origin --delete ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }} || true
-
-          # Create fresh branch
+          git checkout main
+          git reset --hard origin/main
           git checkout -b ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
-
-      - name: Create Empty PR First
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Create an empty commit to initialize the branch
-          git commit --allow-empty -m "Initialize ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
-          git push -f origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
-
-          # Create PR immediately after branch creation
-          gh pr create \
-            --title "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}" \
-            --body "This PR creates a new library: ${{ github.event.inputs.lib_name }}" \
-            --base main \
-            --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
 
       - name: Generate lib
         run: npx nx g @nx/react:library libs/${{ github.event.inputs.lib_name }} --unitTestRunner=vitest --bundler=none
@@ -70,4 +49,19 @@ jobs:
         run: |
           git add .
           git commit -m "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}"
-          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
+          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }} --force
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --title "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}" \
+            --body "This PR creates a new library: ${{ github.event.inputs.lib_name }}
+
+            > **Note**: Due to GitHub Actions limitations, checks need to be manually triggered.
+            > To trigger checks, you can:
+            > 1. Make a small change to the branch and push
+            > 2. Or rebase the branch on main: \`git pull origin main && git rebase main\`" \
+            --base main \
+            --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
