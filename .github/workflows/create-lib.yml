@@ -15,7 +15,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  checks: write # Add checks permission
+  checks: write
 
 jobs:
   create-lib:
@@ -38,8 +38,9 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git fetch origin main:main
+          git fetch origin
           git checkout main
+          git reset --hard origin/main
           git checkout -b ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
 
       - name: Generate lib
@@ -54,20 +55,33 @@ jobs:
       - name: Create and sync PR
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          # Create PR and capture its number
+          # Create PR and store its URL
           PR_URL=$(gh pr create \
             --title "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}" \
             --body "This PR creates a new library: ${{ github.event.inputs.lib_name }}" \
             --base main \
             --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}")
 
-          PR_NUMBER=$(echo $PR_URL | grep -o '[0-9]*$')
+          echo "Created PR: $PR_URL"
 
-          # Update PR branch using GitHub API
+          # Extract PR number
+          PR_NUMBER=$(echo $PR_URL | grep -o '[0-9]*$')
+          echo "PR number: $PR_NUMBER"
+
+          # Sync the PR using GitHub API
           curl -L \
             -X PUT \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ github.token }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/update-branch"
+
+          # Small delay to allow GitHub to process
+          sleep 5
+
+          # Trigger a new commit to force checks
+          git checkout ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
+          git commit --allow-empty -m "trigger checks"
+          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
