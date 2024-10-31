@@ -16,6 +16,7 @@ permissions:
   contents: write
   pull-requests: write
   checks: write
+  actions: write # Add permission to trigger workflows
 
 jobs:
   create-lib:
@@ -52,12 +53,11 @@ jobs:
           git commit -m "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}"
           git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }} --force
 
-      - name: Create and sync PR
+      - name: Create PR and trigger CI
         env:
           GH_TOKEN: ${{ github.token }}
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          # Create PR and store its URL
+          # Create PR and get its number
           PR_URL=$(gh pr create \
             --title "${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}" \
             --body "This PR creates a new library: ${{ github.event.inputs.lib_name }}" \
@@ -65,23 +65,16 @@ jobs:
             --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}")
 
           echo "Created PR: $PR_URL"
-
-          # Extract PR number
           PR_NUMBER=$(echo $PR_URL | grep -o '[0-9]*$')
-          echo "PR number: $PR_NUMBER"
 
-          # Sync the PR using GitHub API
+          # Get the SHA of the head branch
+          HEAD_SHA=$(git rev-parse HEAD)
+
+          # Trigger CI workflow directly
           curl -L \
-            -X PUT \
+            -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ github.token }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/update-branch"
-
-          # Small delay to allow GitHub to process
-          sleep 5
-
-          # Trigger a new commit to force checks
-          git checkout ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
-          git commit --allow-empty -m "trigger checks"
-          git push origin ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/ci.yml/dispatches \
+            -d "{\"ref\":\"${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}\",\"inputs\":{}}"
