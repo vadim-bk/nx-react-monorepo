@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       task_number:
-        description: 'Task/ticket number (e.g., TASK-123)'
+        description: 'Task/ticket number'
         required: true
         type: string
 
@@ -37,10 +37,6 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          title: '${{ github.event.inputs.task_number }}: Create lib ${{ github.event.inputs.lib_name }}'
-          branch: 'feature/${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}'
-          commit-message: 'feat: create lib ${{ github.event.inputs.lib_name }}'
-          body: |
-            Creates new lib ${{ github.event.inputs.lib_name }}
-
-            Task: ${{ github.event.inputs.task_number }}
+          title: '${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}'
+          branch: '${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}'
+          commit-message: '${{ github.event.inputs.task_number }} Create lib ${{ github.event.inputs.lib_name }}'
