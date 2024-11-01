@@ -43,6 +43,37 @@ jobs:
       - name: Generate lib
         run: npx nx g @nx/react:library libs/${{ github.event.inputs.lib_name }} --unitTestRunner=vitest --bundler=none
 
+      - name: Create catalog info
+        run: |
+          # Ensure the library directory exists
+          mkdir -p libs/${{ github.event.inputs.lib_name }}
+
+          # Create the catalog-info.yaml file
+          cat > libs/${{ github.event.inputs.lib_name }}/catalog-info.yaml << 'EOL'
+          apiVersion: backstage.io/v1alpha1
+          kind: Component
+          metadata:
+            name: ${{ github.event.inputs.lib_name }}
+            title: ${{ github.event.inputs.lib_name }}
+            description: NX library generated from template
+            annotations:
+              github.com/project-slug: ${{ github.repository }}
+              backstage.io/techdocs-ref: dir:.
+            tags:
+              - nx
+              - library
+              - react
+          spec:
+            type: library
+            lifecycle: experimental
+            owner: user:guest
+            system: nx-monorepo
+            framework: react
+          EOL
+
+          # Verify the file was created
+          ls -la libs/${{ github.event.inputs.lib_name }}/catalog-info.yaml
+
       - name: Commit and push changes
         run: |
           git add .
