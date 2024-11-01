@@ -35,7 +35,10 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Create and switch to new branch
-        run: git checkout -b ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git
+          git checkout -b ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
 
       - name: Generate lib
         run: npx nx g @nx/react:library libs/${{ github.event.inputs.lib_name }} --unitTestRunner=vitest --bundler=none
