@@ -43,8 +43,8 @@ jobs:
           git reset --hard origin/main
           git checkout -b ${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}
 
-      - name: Generate lib
-        run: npx nx g @nx/react:library libs/${{ github.event.inputs.lib_name }} --unitTestRunner=vitest --bundler=none
+      # - name: Generate lib
+      #   run: npx nx g @nx/react:library libs/${{ github.event.inputs.lib_name }} --unitTestRunner=vitest --bundler=none
 
       - name: Create catalog info
         run: |
