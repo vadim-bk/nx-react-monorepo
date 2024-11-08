@@ -48,11 +48,9 @@ jobs:
 
       - name: Create catalog info
         run: |
-          # Ensure the library directory exists
           mkdir -p libs/${{ github.event.inputs.lib_name }}
 
-          # Create the catalog-info.yaml file
-          cat > libs/${{ github.event.inputs.lib_name }}/catalog-info.yaml << 'EOL'
+          cat > libs/${{ github.event.inputs.lib_name }}/catalog-info.yaml << EOL
           apiVersion: backstage.io/v1alpha1
           kind: Component
           metadata:
@@ -73,9 +71,6 @@ jobs:
             system: nx-monorepo
             framework: react
           EOL
-
-          # Verify the file was created
-          ls -la libs/${{ github.event.inputs.lib_name }}/catalog-info.yaml
 
       - name: Commit and push changes
         run: |
