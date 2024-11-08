@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: testAutoMerge
+  title: testAutoMerge
+  description: NX library generated from template
+  annotations:
+    github.com/project-slug: vadim-bk/nx-react-monorepo
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - nx
+    - library
+    - react
+spec:
+  type: library
+  lifecycle: experimental
+  owner: user:guest
+  system: nx-monorepo
+  framework: react
