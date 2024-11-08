@@ -93,3 +93,23 @@ jobs:
             Upon merge, this library will be automatically registered in Backstage." \
             --base main \
             --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}"
+
+      - name: Enable Auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list --head "${{ github.event.inputs.task_number }}-create-${{ github.event.inputs.lib_name }}" --json number -q ".[0].number")
+          gh pr checks $PR_NUMBER --watch --interval 10
+          if [ $? -eq 0 ]; then
+            gh api graphql -f query='
+              mutation($pullRequestId: ID!) {
+                enablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId, mergeMethod: SQUASH}) {
+                  pullRequest {
+                    number
+                  }
+                }
+              }' -F pullRequestId=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq .node_id)
+            gh pr merge $PR_NUMBER --squash --admin
+          else
+            exit 1
+          fi
